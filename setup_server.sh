@@ -6,7 +6,7 @@
 # 3. Install packages
 
 INSTALL_PACKAGES="build-essential htop cmake python3-pandas make automake libtool pkg-config libaio-dev git libmysqlclient-dev libssl-dev mysql-server"
-GIT_REPO_URL="https://github.com/hikaru2003/sysbench_binary.git"
+GIT_REPO_URL="https://github.com/hikaru2003/sysbench_binary_mysql.git"
 
 # set -e
 # Debug mode
@@ -37,7 +37,7 @@ cd $USER_HOME
 git clone ${GIT_REPO_URL}
 
 # Create MySQL user
-sudo mysql -u root -e "CREATE USER 'sbuser'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON sbtest.* TO 'sbuser'@'localhost'; FLUSH PRIVILEGES;"
+sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS sbtest; CREATE USER 'sbuser'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON sbtest.* TO 'sbuser'@'localhost'; FLUSH PRIVILEGES;"
 sysbench --mysql-host=localhost --mysql-port=3306 --mysql-db=sbtest --mysql-user=sbuser --mysql-password=password --tables=1 --table_size=100 oltp_common prepare
 
 

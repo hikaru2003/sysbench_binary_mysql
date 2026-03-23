@@ -128,7 +128,7 @@ function test_() {
         } > "${raw}"
 
         taskset -c "${TASKSET_CPUS}" ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
-            --mysql-host=127.0.0.1 \
+            --mysql-host=localhost \
             --mysql-port=3306 \
             --mysql-user=sbuser \
             --mysql-password=password \

@@ -10,6 +10,14 @@ COMMENT
 
 set -euo pipefail
 
+# コア0以外の全コアを taskset で指定する（0..N-1 が連続している前提）
+ALL_CPUS="$(nproc --all)"
+if (( ALL_CPUS <= 1 )); then
+    TASKSET_CPUS="0"
+else
+    TASKSET_CPUS="1-$((ALL_CPUS-1))"
+fi
+
 function test_() {
     # デフォルト値
     local tables=1
@@ -94,7 +102,7 @@ function test_() {
 - innodb_sync_spin_loops = ${innodb_sync_spin_loops}
 
 # Command
-$> taskset -c 1-7,9-15 sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run
+ $> taskset -c ${TASKSET_CPUS} sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run
 
 # Output
 - metrics: ${out_tsv}
@@ -115,11 +123,11 @@ $> taskset -c 1-7,9-15 sysbench oltp_read_write --mysql-db=${db} --tables=${tabl
         {
             echo "# run=${i}/${runs}"
             echo "# $(date -Iseconds)"
-            echo "# cmd: taskset -c 1-7,9-15 sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run"
+            echo "# cmd: taskset -c ${TASKSET_CPUS} sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run"
             echo
         } > "${raw}"
 
-        taskset -c 1-7,9-15 ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
+        taskset -c "${TASKSET_CPUS}" ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
             --mysql-host=127.0.0.1 \
             --mysql-port=3306 \
             --mysql-user=sbuser \

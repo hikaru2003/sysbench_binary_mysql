@@ -36,10 +36,12 @@ USER_HOME=/users/Morisaki
 cd $USER_HOME
 git clone ${GIT_REPO_URL}
 
+# export LUA_PATH to include the sysbench_binary_mysql repository
+export LUA_PATH="/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:${LUA_PATH}"
+
 # Create MySQL user
 sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS sbtest; CREATE USER 'sbuser'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON sbtest.* TO 'sbuser'@'localhost'; FLUSH PRIVILEGES;"
-sysbench --mysql-host=localhost --mysql-port=3306 --mysql-db=sbtest --mysql-user=sbuser --mysql-password=password --tables=1 --table_size=100 oltp_common prepare
-
+$USER_HOME/sysbench_binary_mysql/bin/sysbench --mysql-host=localhost --mysql-port=3306 --mysql-db=sbtest --mysql-user=sbuser --mysql-password=password --tables=1 --table_size=100 $USER_HOME/sysbench_binary_mysql/share/sysbench/oltp_common.lua prepare
 
 # Change ownership of the repository to the user
 USER_NAME=Morisaki

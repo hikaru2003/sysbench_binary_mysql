@@ -106,7 +106,7 @@ $> taskset -c 1-7,9-15 sysbench oltp_read_write --mysql-db=${db} --tables=${tabl
     printf "run\ttransactions_per_sec\tqueries_per_sec\tlatency_avg_ms\tlatency_p95_ms\tlatency_min_ms\tlatency_max_ms\ttotal_time_s\terrors_per_sec\n" > "${out_tsv}"
 
     # 実験開始前に InnoDB のスピン待ちパラメータをセット
-    mysql -u root -ppassword -e "SET GLOBAL innodb_spin_wait_delay = ${innodb_spin_wait_delay}; SET GLOBAL innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}; SET GLOBAL innodb_sync_spin_loops = ${innodb_sync_spin_loops};"
+    sudo mysql -e "SET GLOBAL innodb_spin_wait_delay = ${innodb_spin_wait_delay}; SET GLOBAL innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}; SET GLOBAL innodb_sync_spin_loops = ${innodb_sync_spin_loops};"
 
     local i
     for ((i=1; i<=runs; i++)); do
@@ -119,10 +119,10 @@ $> taskset -c 1-7,9-15 sysbench oltp_read_write --mysql-db=${db} --tables=${tabl
             echo
         } > "${raw}"
 
-        taskset -c 1-7,9-15 sysbench oltp_read_write \
+        taskset -c 1-7,9-15 ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
             --mysql-host=127.0.0.1 \
             --mysql-port=3306 \
-            --mysql-user=root \
+            --mysql-user=sbuser \
             --mysql-password=password \
             --mysql-db="$db" \
             --tables="$tables" \

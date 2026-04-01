@@ -38,7 +38,8 @@ USER_HOME=/users/Morisaki
 cd $USER_HOME
 git clone ${GIT_REPO_URL}
 git clone ${ZSHRC_REPO_URL}
-cp ${ZSHRC_REPO_URL}/template ${USER_HOME}/.zshrc
+${ZSHRC_REPO_URL}/install.sh
+cp ${ZSHRC_REPO_URL}/zshrc ${USER_HOME}/.zshrc
 
 # export LUA_PATH to include the sysbench_binary_mysql repository
 echo "export LUA_PATH=\"/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:${LUA_PATH}\"" >> $USER_HOME/.zshrc

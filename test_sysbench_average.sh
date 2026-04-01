@@ -5,7 +5,7 @@
 基本的には上の二行のみ編集すればいい（三行目はデフォルト値でいい）
 ./test_sysbench_average.sh mysql-db=sbtest_100 table_size=100 rand-type=pareto filename= \
 delay=6 multiplier=50 spin_loops=30 \
-tables=1 threads=32 time=60 runs=10 read_threads=4 write_threads=4 
+tables=1 threads=32 time=60 runs=10 read_threads=4 write_threads=4 histogram=off
 COMMENT
 
 set -euo pipefail
@@ -28,6 +28,7 @@ function test_() {
     local filename=tmp
     local db="${SB_DB:-sbtest}"
     local runs=10
+    local histogram="off"
     local innodb_read_io_threads=4
     local innodb_write_io_threads=4
     local innodb_spin_wait_delay=6
@@ -60,6 +61,9 @@ function test_() {
                 ;;
             runs=*)
                 runs="${arg#*=}"
+                ;;
+            histogram=*)
+                histogram="${arg#*=}"
                 ;;
             read_threads=*)
                 innodb_read_io_threads="${arg#*=}"
@@ -100,6 +104,7 @@ function test_() {
 - innodb_spin_wait_delay = ${innodb_spin_wait_delay}
 - innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}
 - innodb_sync_spin_loops = ${innodb_sync_spin_loops}
+- histogram = ${histogram}
 
 # Command
  $> taskset -c ${TASKSET_CPUS} ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
@@ -113,6 +118,7 @@ function test_() {
     --threads=${threads} \
     --time=${time} \
     --rand-type=${rand_type} \
+    --histogram=${histogram} \
     run
 
 # Output
@@ -149,6 +155,7 @@ function test_() {
             --threads="$threads" \
             --time="$time" \
             --rand-type="$rand_type" \
+            --histogram="$histogram" \
             run >> "${raw}"
 
         # sysbench 1.0.x の典型出力（"(265.37 per sec.)" または "([269.95 per sec.)" の両対応）

@@ -38,11 +38,12 @@ USER_HOME=/users/Morisaki
 cd $USER_HOME
 git clone ${GIT_REPO_URL}
 git clone ${ZSHRC_REPO_URL}
-${ZSHRC_REPO_URL}/install.sh
-cp ${ZSHRC_REPO_URL}/zshrc ${USER_HOME}/.zshrc
+bash zshrc/install.sh
+cp zshrc/zshrc ${USER_HOME}/.zshrc
+chmod 644 ${USER_HOME}/.zshrc
 
 # export LUA_PATH to include the sysbench_binary_mysql repository
-echo "export LUA_PATH=\"/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:${LUA_PATH}\"" >> $USER_HOME/.zshrc
+echo "export LUA_PATH='/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:\$LUA_PATH'" >> $USER_HOME/.zshrc
 
 # Create MySQL user
 sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS sbtest; CREATE USER 'sbuser'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON sbtest.* TO 'sbuser'@'localhost'; FLUSH PRIVILEGES;"

@@ -5,8 +5,9 @@
 # 2. apt update
 # 3. Install packages
 
-INSTALL_PACKAGES="build-essential htop cmake python3-pandas make automake libtool pkg-config libaio-dev git libmysqlclient-dev libssl-dev mysql-server"
+INSTALL_PACKAGES="build-essential htop cmake python3-pandas make automake libtool pkg-config libaio-dev git libmysqlclient-dev libssl-dev mysql-server zsh curl"
 GIT_REPO_URL="https://github.com/hikaru2003/sysbench_binary_mysql.git"
+ZSHRC_REPO_URL="https://github.com/hikaru2003/zshrc.git"
 
 # set -e
 # Debug mode
@@ -29,15 +30,18 @@ fi
 echo "Installing packages..."
 DEBIAN_FRONTEND=noninteractive apt update
 DEBIAN_FRONTEND=noninteractive apt install -y ${INSTALL_PACKAGES}
+sudo chsh -s $(which zsh) $USER
 
 # Clone experiment repository
 echo "Cloning experiment repository..."
 USER_HOME=/users/Morisaki
 cd $USER_HOME
 git clone ${GIT_REPO_URL}
+git clone ${ZSHRC_REPO_URL}
+cp ${ZSHRC_REPO_URL}/template ${USER_HOME}/.zshrc
 
 # export LUA_PATH to include the sysbench_binary_mysql repository
-export LUA_PATH="/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:${LUA_PATH}"
+echo "export LUA_PATH=\"/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:${LUA_PATH}\"" >> $USER_HOME/.zshrc
 
 # Create MySQL user
 sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS sbtest; CREATE USER 'sbuser'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON sbtest.* TO 'sbuser'@'localhost'; FLUSH PRIVILEGES;"

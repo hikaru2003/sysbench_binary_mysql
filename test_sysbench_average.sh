@@ -102,7 +102,18 @@ function test_() {
 - innodb_sync_spin_loops = ${innodb_sync_spin_loops}
 
 # Command
- $> taskset -c ${TASKSET_CPUS} sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run
+ $> taskset -c ${TASKSET_CPUS} ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
+    --mysql-host=localhost \
+    --mysql-port=3306 \
+    --mysql-user=sbuser \
+    --mysql-password=password \
+    --mysql-db=${db} \
+    --tables=${tables} \
+    --table_size=${table_size} \
+    --threads=${threads} \
+    --time=${time} \
+    --rand-type=${rand_type} \
+    run
 
 # Output
 - metrics: ${out_tsv}

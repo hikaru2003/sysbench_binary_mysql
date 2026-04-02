@@ -2,3 +2,4 @@ __pycache__/
 baseline/
 delay_0/
 multiplier*
+setup_server.sh

@@ -1,4 +1,4 @@
-import os
+mport os
 import glob
 import sys
 import matplotlib.pyplot as plt
@@ -40,7 +40,7 @@ def collect_data(target_dirs):
     df = df.sort_values('directory').reset_index(drop=True)
     return df
 
-def plot_data(df):
+def plot_data(df, x_label_text):
     if df is None or df.empty:
         return
 
@@ -60,7 +60,8 @@ def plot_data(df):
         plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.2f}', 
                  ha='center', va='bottom', fontsize=9, fontweight='bold')
 
-    plt.xlabel('Experiment Configuration')
+    # 63行目付近：引数で受け取った文字列をxlabelにセット
+    plt.xlabel(x_label_text)
     plt.ylabel('Total Watts (Socket0 + Socket1)')
     plt.title('Power Consumption (Specified Directories)')
     plt.xticks(rotation=45, ha='right')
@@ -72,13 +73,22 @@ def plot_data(df):
     plt.show()
 
 if __name__ == "__main__":
-    # 引数がある場合はそれを使用、ない場合はカレントディレクトリ "." を使用
-    target_directories = sys.argv[1:] if len(sys.argv) > 1 else ["."]
+    # 引数チェック
+    if len(sys.argv) < 2:
+        print("使用法: python draw_power_consumption.py \"X軸のラベル名\" ディレクトリ1 [ディレクトリ2 ...]")
+        sys.exit(1)
+
+    # 第1引数をxlabelのテキストとして取得
+    x_label_input = sys.argv[1]
+    # 第2引数以降を探索ディレクトリとして取得
+    target_directories = sys.argv[2:] if len(sys.argv) > 2 else ["."]
     
+    print(f"X軸ラベル: {x_label_input}")
     print(f"探索対象ディレクトリ: {target_directories}")
+    
     df_results = collect_data(target_directories)
     
     if df_results is not None:
         print("\n集計結果:")
         print(df_results)
-        plot_data(df_results)
+        plot_data(df_results, x_label_input)

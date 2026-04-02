@@ -1,0 +1,31 @@
+# Environmental Setting
+- innodb_read_io_threads = 4
+- innodb_write_io_threads = 4
+- innodb_spin_wait_delay = 6
+- innodb_spin_wait_pause_multiplier = 50
+- innodb_sync_spin_loops = 30
+- histogram = off
+
+# Power measurement
+- PCM: /users/Morisaki/pcm/build/bin/pcm-power
+- Per run: baseline/power_run<N>.csv → grep_watts.py → power_run<N>_watts.csv
+
+# Command
+ $> taskset -c 1-39 ./bin/sysbench ./share/sysbench/oltp_read_write.lua     --mysql-host=localhost     --mysql-port=3306     --mysql-user=sbuser     --mysql-password=password     --mysql-db=sbtest     --tables=1     --table_size=100     --threads=32     --time=60     --rand-type=pareto     --histogram=off     run
+
+# Output
+- metrics: baseline/metrics.tsv
+- summary: baseline/summary.txt
+- raw logs: baseline/run<N>.txt
+- power CSV: baseline/power_run<N>.csv, baseline/power_run<N>_watts.csv
+
+
+## Extracted metrics (TSV)
+baseline/metrics.tsv
+
+runs=1
+TPS_avg=14.3600
+QPS_avg=316.4500
+Latency_avg_ms=2187.3900
+Latency_p95_ms_avg=4599.9900
+Ignored_errors_per_sec_avg=1.8000

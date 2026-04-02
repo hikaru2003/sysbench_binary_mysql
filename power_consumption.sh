@@ -184,7 +184,8 @@ function test_() {
         wait "$PCM_POWER_PID" 2>/dev/null || true
         PCM_POWER_PID=""
 
-        python3 grep_watts.py "$power_csv"
+		# [TODO] pcmの表示形式によってはエラーになるため、実験終了後にgrep_watts.pyを実行する
+        # python3 grep_watts.py "$power_csv"
 
         # sysbench 1.0.x の典型出力（"(265.37 per sec.)" または "([269.95 per sec.)" の両対応）
         local tps qps avg p95 min max total_time eps

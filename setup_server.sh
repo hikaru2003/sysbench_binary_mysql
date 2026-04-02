@@ -66,7 +66,7 @@ sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS sbtest; CREATE USER 'sbuser
 $USER_HOME/sysbench_binary_mysql/bin/sysbench --mysql-host=localhost --mysql-port=3306 --mysql-db=sbtest --mysql-user=sbuser --mysql-password=password --tables=1 --table_size=100 $USER_HOME/sysbench_binary_mysql/share/sysbench/oltp_common.lua prepare
 
 # Change ownership of the repository to the user
-cd $USER_HOME　
+cd $USER_HOME
 USER_NAME=Morisaki
 USER_GROUP=sslabko-fast-nw-
 chown -R $USER_NAME:$USER_GROUP $(basename ${GIT_REPO_URL} .git)

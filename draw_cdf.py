@@ -93,7 +93,7 @@ def process_and_plot(target_dirs, x_label_text):
     plt.legend()
     plt.tight_layout()
 
-    output_file = 'latency_cdf.png'
+    output_file = 'latency_cdf.pdf'
     plt.savefig(output_file)
     print(f"CDF Graph saved as '{output_file}'")
     plt.show()

@@ -1,0 +1,43 @@
+# run=1/1
+# 2026-04-01T22:24:04-05:00
+# cmd: taskset -c 1-39 sysbench oltp_read_write --mysql-db=sbtest --tables=1 --table_size=100 --threads=32 --time=60 --rand-type=pareto run
+# power: sudo /users/Morisaki/pcm/build/bin/pcm-power 1 -csv=multiplier_5_delay_5/power_run1.csv
+
+sysbench 1.1.0-3ceba0b (using bundled LuaJIT 2.1.0-beta3)
+
+Running the test with following options:
+Number of threads: 32
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            628124
+        write:                           162962
+        other:                           83704
+        total:                           874790
+    transactions:                        38838  (646.75 per sec.)
+    queries:                             874790 (14567.51 per sec.)
+    ignored errors:                      6028   (100.38 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+Throughput:
+    events/s (eps):                      646.7528
+    time elapsed:                        60.0508s
+    total number of events:              38838
+
+Latency (ms):
+         min:                                    3.48
+         avg:                                   49.45
+         max:                                  328.35
+         95th percentile:                      104.84
+         sum:                              1920601.42
+
+Threads fairness:
+    events (avg/stddev):           1213.6875/16.96
+    execution time (avg/stddev):   60.0188/0.01
+

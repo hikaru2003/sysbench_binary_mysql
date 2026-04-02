@@ -1,4 +1,4 @@
-mport os
+import os
 import glob
 import sys
 import matplotlib.pyplot as plt

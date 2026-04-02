@@ -1,17 +1,25 @@
 import os
 import glob
+import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def collect_data():
+def collect_data(target_dirs):
     data = []
-    files = glob.glob("**/power_run1_watts_mean.csv", recursive=True)
+    files = []
+    
+    # 指定された各ディレクトリに対して検索を実行
+    for d in target_dirs:
+        search_path = os.path.join(d, "**/power_run1_watts_mean.csv")
+        found_files = glob.glob(search_path, recursive=True)
+        files.extend(found_files)
     
     if not files:
-        print("ファイルが見つかりませんでした。")
+        print("指定されたディレクトリ内に対象ファイルが見つかりませんでした。")
         return None
 
     for file_path in files:
+        # ディレクトリ名を取得
         dir_name = os.path.dirname(file_path).split(os.sep)[-1]
         total_watts = 0.0
         try:
@@ -28,7 +36,7 @@ def collect_data():
             print(f"Error reading {file_path}: {e}")
 
     df = pd.DataFrame(data)
-    # ディレクトリ名でソート
+    # グラフの見た目を整えるためディレクトリ名でソート
     df = df.sort_values('directory').reset_index(drop=True)
     return df
 
@@ -39,27 +47,22 @@ def plot_data(df):
     plt.figure(figsize=(12, 6))
     bars = plt.bar(df['directory'], df['total_watts'], color='skyblue', edgecolor='navy')
     
-    # --- Y軸の範囲を調整するロジック ---
+    # Y軸の範囲を調整（ズーム）
     min_val = df['total_watts'].min()
     max_val = df['total_watts'].max()
-    margin = (max_val - min_val) * 0.2  # 上下に20%の余白を持たせる
+    margin = (max_val - min_val) * 0.3  # 少し余裕を持たせる
     
-    # 差がほとんどない場合のフォールバック
-    if margin == 0:
-        margin = min_val * 0.05
-        
+    if margin == 0: margin = min_val * 0.1
     plt.ylim(min_val - margin, max_val + margin)
-    # ---------------------------------
 
-    # 各バーの上に数値を表示
     for bar in bars:
         yval = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.2f}', 
                  ha='center', va='bottom', fontsize=9, fontweight='bold')
 
-    plt.xlabel('Experiment Configuration (Directory)')
+    plt.xlabel('Experiment Configuration')
     plt.ylabel('Total Watts (Socket0 + Socket1)')
-    plt.title('Total Power Consumption (Zoomed)')
+    plt.title('Power Consumption (Specified Directories)')
     plt.xticks(rotation=45, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
@@ -69,8 +72,13 @@ def plot_data(df):
     plt.show()
 
 if __name__ == "__main__":
-    df_results = collect_data()
+    # 引数がある場合はそれを使用、ない場合はカレントディレクトリ "." を使用
+    target_directories = sys.argv[1:] if len(sys.argv) > 1 else ["."]
+    
+    print(f"探索対象ディレクトリ: {target_directories}")
+    df_results = collect_data(target_directories)
+    
     if df_results is not None:
-        print("集計結果:")
+        print("\n集計結果:")
         print(df_results)
         plot_data(df_results)

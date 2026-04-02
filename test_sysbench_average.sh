@@ -3,9 +3,9 @@
 #usage:
 << COMMENT
 基本的には上の二行のみ編集すればいい（三行目はデフォルト値でいい）
-./test_sysbench_average.sh mysql-db=sbtest_100 table_size=100 rand-type=pareto filename= \
+./test_sysbench_average.sh mysql-db=sbtest_100 table_size=100 rand-type=pareto histogram=off filename= \
 delay=6 multiplier=50 spin_loops=30 \
-tables=1 threads=32 time=60 runs=10 read_threads=4 write_threads=4 histogram=off
+tables=1 threads=32 time=60 runs=10 read_threads=4 write_threads=4
 COMMENT
 
 set -euo pipefail

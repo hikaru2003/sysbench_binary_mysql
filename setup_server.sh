@@ -8,6 +8,7 @@
 INSTALL_PACKAGES="build-essential htop cmake python3-pandas make automake libtool pkg-config libaio-dev git libmysqlclient-dev libssl-dev mysql-server zsh curl"
 GIT_REPO_URL="https://github.com/hikaru2003/sysbench_binary_mysql.git"
 ZSHRC_REPO_URL="https://github.com/hikaru2003/zshrc.git"
+PCM_REPO=https://github.com/intel/pcm
 
 # set -e
 # Debug mode
@@ -21,7 +22,7 @@ echo "=== Startup script started ==="
 echo "Disabling Turbo Boost..."
 if [ -e /sys/devices/system/cpu/intel_pstate/no_turbo ]; then
     echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
-    echo "Turbo Boost disabled."
+	echo "Turbo Boost disabled."
 else
     echo "Intel pstate not found, skipping Turbo Boost disable."
 fi
@@ -37,10 +38,25 @@ echo "Cloning experiment repository..."
 USER_HOME=/users/Morisaki
 cd $USER_HOME
 git clone ${GIT_REPO_URL}
+
+# Clone zshrc repository
+echo "Cloning zshrc repository..."
+cd $USER_HOME
 git clone ${ZSHRC_REPO_URL}
 bash zshrc/install.sh
 cp zshrc/zshrc ${USER_HOME}/.zshrc
 chmod 644 ${USER_HOME}/.zshrc
+
+# Clone PCM repository
+echo "Cloning PCM repository..."
+git clone --recursive ${PCM_REPO}
+cd pcm/
+git fetch --all --tags
+git checkout
+mkdir build
+cd build
+cmake ..
+cmake --build .
 
 # export LUA_PATH to include the sysbench_binary_mysql repository
 echo "export LUA_PATH='/users/Morisaki/sysbench_binary_mysql/share/sysbench/?.lua;/users/Morisaki/sysbench_binary_mysql/share/sysbench/?/init.lua:\$LUA_PATH'" >> $USER_HOME/.zshrc
@@ -53,5 +69,7 @@ $USER_HOME/sysbench_binary_mysql/bin/sysbench --mysql-host=localhost --mysql-por
 USER_NAME=Morisaki
 USER_GROUP=sslabko-fast-nw-
 chown -R $USER_NAME:$USER_GROUP $(basename ${GIT_REPO_URL} .git)
+chown -R $USER_NAME:$USER_GROUP $(basename ${ZSHRC_REPO_URL} .git)
+chown -R $USER_NAME:$USER_GROUP $(basename ${PCM_REPO} .git)
 
 echo "=== Startup script completed ==="

@@ -1,0 +1,26 @@
+# Environmental Setting
+- innodb_read_io_threads = 4
+- innodb_write_io_threads = 4
+- innodb_spin_wait_delay = 6
+- innodb_spin_wait_pause_multiplier = 16
+- innodb_sync_spin_loops = 30
+- histogram = off
+
+# Command
+ $> taskset -c 1-39 ./bin/sysbench ./share/sysbench/oltp_read_write.lua     --mysql-host=localhost     --mysql-port=3306     --mysql-user=sbuser     --mysql-password=password     --mysql-db=sbtest     --tables=1     --table_size=100     --threads=32     --time=60     --rand-type=pareto     --histogram=off     run
+
+# Output
+- metrics: multiplier_16/metrics.tsv
+- summary: multiplier_16/summary.txt
+- raw logs: multiplier_16/run<N>.txt
+
+
+## Extracted metrics (TSV)
+multiplier_16/metrics.tsv
+
+runs=10
+TPS_avg=634.2940
+QPS_avg=14238.5300
+Latency_avg_ms=50.4320
+Latency_p95_ms_avg=106.1790
+Ignored_errors_per_sec_avg=95.5140

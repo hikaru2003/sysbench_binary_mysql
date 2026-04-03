@@ -1,6 +1,4 @@
 __pycache__/
-baseline/
+default/
 delay_0/
 multiplier*
-setup_server.sh
-exec_script.sh

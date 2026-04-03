@@ -1,100 +1,94 @@
 import os
-import glob
 import sys
-import matplotlib.pyplot as plt
-import pandas as pd
 import re
+import matplotlib.pyplot as plt
 
-def collect_tps_data(target_dirs):
-    data = []
-    files = []
+def extract_tps(file_path):
+    """summary.txtからTPS_avgの値を抽出する"""
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+            match = re.search(r'TPS_avg=([\d\.]+)', content)
+            if match:
+                return float(match.group(1))
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+    return None
+
+def natural_keys(text):
+    """
+    文字列を数値と非数値に分割し、数値部分はintとして返す
+    (自然順ソート用のキー関数)
+    """
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text)]
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: python plot_tps.py <Graph_Title> <Directory_Path>")
+        sys.exit(1)
+
+    graph_title = sys.argv[1]
+    base_dir = sys.argv[2]
+
+    tps_data = {}
+
+    if not os.path.isdir(base_dir):
+        print(f"Error: {base_dir} is not a directory.")
+        sys.exit(1)
+
+    # サブディレクトリを走査
+    subdirs = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))]
     
-    # 指定された各ディレクトリに対して summary.txt を検索
-    for d in target_dirs:
-        search_path = os.path.join(d, "**/summary.txt")
-        found_files = glob.glob(search_path, recursive=True)
-        files.extend(found_files)
+    for subdir in subdirs:
+        file_path = os.path.join(base_dir, subdir, "summary.txt")
+        if os.path.exists(file_path):
+            val = extract_tps(file_path)
+            if val is not None:
+                tps_data[subdir] = val
+
+    if 'default' not in tps_data:
+        print("Error: 'default' directory or TPS_avg in default/summary.txt not found.")
+        sys.exit(1)
+
+    # --- 並び替えロジック ---
+    # defaultを除いたディレクトリ名をソートし、先頭にdefaultを追加する
+    other_dirs = sorted([d for d in tps_data.keys() if d != 'default'])
+    other_dirs.sort(key=natural_keys)
+    sorted_keys = ['default'] + other_dirs
+
+    # defaultの値を基準に正規化
+    baseline = tps_data['default']
+    labels = sorted_keys
+    values = [tps_data[k] / baseline for k in labels]
+
+    # グラフ描画
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(labels, values, color='skyblue', edgecolor='navy')
     
-    if not files:
-        print("指定されたディレクトリ内に summary.txt が見つかりませんでした。")
-        return None
-
-    for file_path in files:
-        # ディレクトリ名を取得 (例: baseline, multiplier_5_delay_1 など)
-        dir_name = os.path.dirname(file_path).split(os.sep)[-1]
-        
-        tps_value = None
-        try:
-            with open(file_path, 'r') as f:
-                for line in f:
-                    # "TPS_avg=635.2630" のような形式を正規表現で抽出
-                    match = re.search(r"TPS_avg=([\d.]+)", line)
-                    if match:
-                        tps_value = float(match.group(1))
-                        break # 見つかったらそのファイルの読み込みを終了
-            
-            if tps_value is not None:
-                data.append({'directory': dir_name, 'tps_avg': tps_value})
-            else:
-                print(f"警告: {file_path} 内に TPS_avg が見つかりませんでした。")
-                
-        except Exception as e:
-            print(f"Error reading {file_path}: {e}")
-
-    df = pd.DataFrame(data)
-    # ディレクトリ名でソート
-    df = df.sort_values('directory').reset_index(drop=True)
-    return df
-
-def plot_tps_data(df, x_label_text):
-    if df is None or df.empty:
-        print("表示するデータがありません。")
-        return
-
-    plt.figure(figsize=(12, 6))
-    # TPSなので色は少し変えて「黄緑(lightgreen)」にしています
-    bars = plt.bar(df['directory'], df['tps_avg'], color='lightgreen', edgecolor='darkgreen')
+    # 基準線 (1.0)
+    plt.axhline(y=1.0, color='red', linestyle='--', linewidth=1)
     
-    # Y軸の範囲調整（ズーム）
-    min_val = df['tps_avg'].min()
-    max_val = df['tps_avg'].max()
-    margin = (max_val - min_val) * 0.3
-    
-    if margin == 0: margin = min_val * 0.1
-    plt.ylim(min_val - margin, max_val + margin)
+    plt.title(graph_title)
+    plt.ylabel('Normalized TPS (default = 1.0)')
+    plt.xlabel('Configuration')
+    plt.xticks(rotation=45)
+    #plt.legend()
+    plt.grid(axis='y', linestyle=':', alpha=0.7)
 
     # バーの上に数値を表示
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.2f}', 
-                 ha='center', va='bottom', fontsize=9, fontweight='bold')
+        plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.2f}', va='bottom', ha='center')
 
-    plt.xlabel(x_label_text)
-    plt.ylabel('Average TPS (Transactions Per Second)')
-    plt.title('Throughput Performance (TPS_avg)')
-    plt.xticks(rotation=45, ha='right')
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
-
-    output_file = 'tps_performance.pdf'
-    plt.savefig(output_file)
-    print(f"グラフを '{output_file}' として保存しました。")
+    
+    # PDFとして保存
+    output_filename = "tps_graph.pdf"
+    plt.savefig(output_filename)
+    print(f"Graph saved as {output_filename}")
+    
+    # 実行環境に画面がある場合は表示
     plt.show()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("使用法: python draw_tps_graph.py \"X軸のラベル名\" ディレクトリ1 [ディレクトリ2 ...]")
-        sys.exit(1)
-
-    x_label_input = sys.argv[1]
-    target_directories = sys.argv[2:] if len(sys.argv) > 2 else ["."]
-    
-    print(f"X軸ラベル: {x_label_input}")
-    print(f"探索対象ディレクトリ: {target_directories}")
-    
-    df_results = collect_tps_data(target_directories)
-    
-    if df_results is not None:
-        print("\n集計結果:")
-        print(df_results)
-        plot_tps_data(df_results, x_label_input)
+    main()

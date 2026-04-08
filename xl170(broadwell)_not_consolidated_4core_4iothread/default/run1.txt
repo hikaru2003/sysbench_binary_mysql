@@ -1,0 +1,42 @@
+# run=1/10
+# 2026-04-02T23:44:11-06:00
+# cmd: taskset -c 1-19 sysbench oltp_read_write --mysql-db=sbtest --tables=1 --table_size=100 --threads=32 --time=60 --rand-type=pareto run
+
+sysbench 1.1.0-3ceba0b (using bundled LuaJIT 2.1.0-beta3)
+
+Running the test with following options:
+Number of threads: 32
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            573104
+        write:                           148283
+        other:                           76254
+        total:                           797641
+    transactions:                        35318  (588.24 per sec.)
+    queries:                             797641 (13285.21 per sec.)
+    ignored errors:                      5618   (93.57 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+Throughput:
+    events/s (eps):                      588.2436
+    time elapsed:                        60.0398s
+    total number of events:              35318
+
+Latency (ms):
+         min:                                    2.36
+         avg:                                   54.38
+         max:                                  329.16
+         95th percentile:                      116.80
+         sum:                              1920568.86
+
+Threads fairness:
+    events (avg/stddev):           1103.6875/22.35
+    execution time (avg/stddev):   60.0178/0.01
+

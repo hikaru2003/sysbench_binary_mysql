@@ -1,0 +1,9 @@
+- SMT ON
+
+# mysql
+- CPU Affinity = 0-3(4コアで実行)
+- innodb_read_io_threads=4, innodb_write_io_threads=4
+
+# sysbench
+- 実行スレッド=32
+- oltp_read_writeテスト

@@ -47,7 +47,7 @@ myisam-recover-options  = BACKUP
 max_connections        = 151
 
 # [CHANGE] default read, write threads = 4
-innodb_thread_concurrency = 6
+innodb_thread_concurrency = 5
 innodb_read_io_threads = 2
 innodb_write_io_threads = 2
 innodb_purge_threads = 1

@@ -5,5 +5,6 @@
 - innodb_read_io_threads=4, innodb_write_io_threads=4
 
 # sysbench
+- 実行コアを0以外の全てにしていたので若干実験結果に影響しているかも
 - 実行スレッド=32
 - oltp_read_writeテスト

@@ -1,0 +1,6 @@
+run	transactions_per_sec	queries_per_sec	latency_avg_ms	latency_p95_ms	latency_min_ms	latency_max_ms	total_time_s	errors_per_sec
+1	416.48	8329.51	2.40	3.13	1.87	10.25	NA	0.00
+2	417.65	8352.96	2.39	3.19	1.85	23.34	NA	0.00
+3	398.11	7962.29	2.51	3.62	1.82	8.29	NA	0.00
+4	419.86	8397.13	2.38	3.13	1.81	9.35	NA	0.00
+5	421.07	8421.39	2.37	3.07	1.86	22.44	NA	0.00

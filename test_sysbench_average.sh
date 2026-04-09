@@ -5,37 +5,45 @@
 基本的には上の二行のみ編集すればいい（三行目はデフォルト値でいい）
 ./test_sysbench_average.sh mysql-db=sbtest_100 table_size=100 rand-type=pareto histogram=off filename= \
 delay=6 multiplier=50 spin_loops=30 \
-tables=1 threads=32 time=60 runs=10 read_threads=4 write_threads=4
+tables=1 sysbench_threads=32 time=60 runs=10
 COMMENT
 
 set -euo pipefail
 
-# コア0以外の全コアを taskset で指定する（0..N-1 が連続している前提）
+# コア0-4(mysql専用)以外のコアを taskset で指定する(sysbench実行コア)
 ALL_CPUS="$(nproc --all)"
+# sysbench実行コアを指定する
 if (( ALL_CPUS <= 1 )); then
     TASKSET_CPUS="0"
 else
-    TASKSET_CPUS="1-$((ALL_CPUS-1))"
+    TASKSET_CPUS="5-$((ALL_CPUS-1))"
 fi
+
+# MySQLから現在の設定値を取得する関数
+function get_mysql_var() {
+    local var_name=$1
+    sudo mysql -N -s -e "SHOW GLOBAL VARIABLES LIKE '${var_name}';" | awk '{print $2}'
+}
 
 function test_() {
     # デフォルト値
     local tables=1
     local table_size=100000
-    local threads=32
+    local sysbench_threads=32
     local time=60
     local rand_type=pareto
     local filename=tmp
     local db="${SB_DB:-sbtest}"
     local runs=10
     local histogram="off"
-    local innodb_read_io_threads=4
-    local innodb_write_io_threads=4
-    local innodb_spin_wait_delay=6
-    local innodb_spin_wait_pause_multiplier=50
-    local innodb_sync_spin_loops=30
+    
+	# 指定された4つの変数＋スピン待ち系をMySQLから取得
+    local innodb_thread_concurrency=$(get_mysql_var "innodb_thread_concurrency")
+    local innodb_purge_threads=$(get_mysql_var "innodb_purge_threads")
+    local innodb_read_io_threads=$(get_mysql_var "innodb_read_io_threads")
+    local innodb_write_io_threads=$(get_mysql_var "innodb_write_io_threads")
 
-    # 引数 (例: tables=2 threads=64 rand-type=uniform db=mydb) で上書き
+    # 引数 (例: tables=2 sysbench_threads=64 rand-type=uniform db=mydb) で上書き
     for arg in "$@"; do
         case "$arg" in
             tables=*)
@@ -44,8 +52,8 @@ function test_() {
             table_size=*)
                 table_size="${arg#*=}"
                 ;;
-            threads=*)
-                threads="${arg#*=}"
+            sysbench_threads=*)
+                sysbench_threads="${arg#*=}"
                 ;;
             time=*)
                 time="${arg#*=}"
@@ -64,12 +72,6 @@ function test_() {
                 ;;
             histogram=*)
                 histogram="${arg#*=}"
-                ;;
-            read_threads=*)
-                innodb_read_io_threads="${arg#*=}"
-                ;;
-            write_threads=*)
-                innodb_write_io_threads="${arg#*=}"
                 ;;
             delay=*)
                 innodb_spin_wait_delay="${arg#*=}"
@@ -91,6 +93,14 @@ function test_() {
         exit 1
     fi
 
+	# 実験開始前に InnoDB のスピン待ちパラメータをセット
+    sudo mysql -e "SET GLOBAL innodb_spin_wait_delay = ${innodb_spin_wait_delay}; SET GLOBAL innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}; SET GLOBAL innodb_sync_spin_loops = ${innodb_sync_spin_loops};"
+    local innodb_spin_wait_delay=$(get_mysql_var "innodb_spin_wait_delay")
+    local innodb_spin_wait_pause_multiplier=$(get_mysql_var "innodb_spin_wait_pause_multiplier")
+    local innodb_sync_spin_loops=$(get_mysql_var "innodb_sync_spin_loops")
+	local innodb_flush_log_at_trx_commit=$(get_mysql_var "innodb_flush_log_at_trx_commit")
+	local sync_binlog=$(get_mysql_var "sync_binlog")
+
     local out_dir="${filename}"
     local out_tsv="${out_dir}/metrics.tsv"
     local out_summary="${out_dir}/summary.txt"
@@ -99,12 +109,20 @@ function test_() {
 
     {
         echo "# Environmental Setting
+# mysql config:
+- innodb_thread_concurrency = ${innodb_thread_concurrency}
+- innodb_purge_threads = ${innodb_purge_threads}
 - innodb_read_io_threads = ${innodb_read_io_threads}
 - innodb_write_io_threads = ${innodb_write_io_threads}
+
+# additional setting for disk boot
+- innodb_flush_log_at_trx_commit = ${innodb_flush_log_at_trx_commit}
+- sync_binlog = ${sync_binlog}
+
+# InnoDB spin wait setting
 - innodb_spin_wait_delay = ${innodb_spin_wait_delay}
 - innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}
 - innodb_sync_spin_loops = ${innodb_sync_spin_loops}
-- histogram = ${histogram}
 
 # Command
  $> taskset -c ${TASKSET_CPUS} ./bin/sysbench ./share/sysbench/oltp_read_write.lua \
@@ -115,7 +133,7 @@ function test_() {
     --mysql-db=${db} \
     --tables=${tables} \
     --table_size=${table_size} \
-    --threads=${threads} \
+    --threads=${sysbench_threads} \
     --time=${time} \
     --rand-type=${rand_type} \
     --histogram=${histogram} \
@@ -130,8 +148,6 @@ function test_() {
 
     printf "run\ttransactions_per_sec\tqueries_per_sec\tlatency_avg_ms\tlatency_p95_ms\tlatency_min_ms\tlatency_max_ms\ttotal_time_s\terrors_per_sec\n" > "${out_tsv}"
 
-    # 実験開始前に InnoDB のスピン待ちパラメータをセット
-    sudo mysql -e "SET GLOBAL innodb_spin_wait_delay = ${innodb_spin_wait_delay}; SET GLOBAL innodb_spin_wait_pause_multiplier = ${innodb_spin_wait_pause_multiplier}; SET GLOBAL innodb_sync_spin_loops = ${innodb_sync_spin_loops};"
 
     local i
     for ((i=1; i<=runs; i++)); do
@@ -140,7 +156,20 @@ function test_() {
         {
             echo "# run=${i}/${runs}"
             echo "# $(date -Iseconds)"
-            echo "# cmd: taskset -c ${TASKSET_CPUS} sysbench oltp_read_write --mysql-db=${db} --tables=${tables} --table_size=${table_size} --threads=${threads} --time=${time} --rand-type=${rand_type} run"
+            echo "
+# cmd: taskset -c "${TASKSET_CPUS}" ./bin/sysbench ./share/sysbench/oltp_read_write.lua
+           --mysql-host=localhost
+           --mysql-port=3306
+           --mysql-user=sbuser
+           --mysql-password=password
+           --mysql-db="$db"
+           --tables="$tables"
+           --table_size="$table_size"
+           --threads="$sysbench_threads"
+           --time="$time"
+           --rand-type="$rand_type"
+           --histogram="$histogram"
+           run"
             echo
         } > "${raw}"
 
@@ -152,7 +181,7 @@ function test_() {
             --mysql-db="$db" \
             --tables="$tables" \
             --table_size="$table_size" \
-            --threads="$threads" \
+            --threads="$sysbench_threads" \
             --time="$time" \
             --rand-type="$rand_type" \
             --histogram="$histogram" \

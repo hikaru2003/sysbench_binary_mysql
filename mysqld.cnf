@@ -47,8 +47,10 @@ myisam-recover-options  = BACKUP
 max_connections        = 151
 
 # [CHANGE] default read, write threads = 4
-innodb_read_io_threads = 4
-innodb_write_io_threads = 4
+innodb_thread_concurrency = 6
+innodb_read_io_threads = 2
+innodb_write_io_threads = 2
+innodb_purge_threads = 1
 
 # table_open_cache       = 4000
 
@@ -83,5 +85,5 @@ max_binlog_size   = 100M
 # binlog_ignore_db	= include_database_name
 
 # additional setting for disk boot
-#innodb_flush_log_at_trx_commit = 2
-#sync_binlog = 0
+innodb_flush_log_at_trx_commit = 2
+sync_binlog = 0
